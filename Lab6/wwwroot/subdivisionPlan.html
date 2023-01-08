@@ -1,0 +1,199 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Компания</title>
+    <link href="lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+    <script src="lib/jquery/dist/jquery.js"></script>
+    <link href="lib/jquery-ui/themes/base/jquery-ui.min.css" rel="stylesheet" />
+    <script src="lib/jquery-ui/jquery-ui.js"></script>
+    <script src="lib/jquery-ui/ui/i18n/datepicker-ru.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Список плана предприятий</h2>
+        <form name="subdivisionPlanForm">
+            <label for="subdivisionPlanId" id="CRUD" name="CRUD">Добавить:</label>
+            <input type="hidden" id="subdivisionPlanId" name="subdivisionPlanId" value=0 />
+            <div class="form-group">
+                <label Добавить>Предприятия:</label>
+                <select id="subdivisionId" name="subdivisionId"></select>
+            </div>
+            <div class="form-group">
+                <label for="date">Индекс</label>
+                <input class="form-control" name="subdivisionPlanIndex" id="subdivisionPlanIndex" />
+            </div>
+            <div class="form-group">
+                <label for="date">Дата</label>
+                <input class="form-control" name="subdivisionPlanDate" id="subdivisionPlanDate" />
+            </div>
+            <div class="panel-body">
+                <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
+                <a id="reset" class="btn btn-sm btn-primary">Сбросить</a>
+            </div>
+
+        </form>
+
+        <table class="table table-condensed table-striped table-bordered">
+            <thead><tr><th>Код</th><th>Дата</th><th>Индекс</th><th>Имя</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>function GetSubdivisionPlans() {
+            $.ajax({
+                url: '/api/subdivisionPlan',
+                type: 'GET',
+                contentType: "application/json",
+                success: function (subdivisionPlans) {
+                    var rows = "";
+                    $.each(subdivisionPlans, function (index, subdivisionPlan) {
+                        rows += row(subdivisionPlan);
+                    })
+                    $("table tbody").append(rows);
+                }
+            });
+        }
+
+        function GetSubdivisionPlan(id) {
+            $.ajax({
+                url: '/api/subdivisionPlan/' + id,
+                type: 'GET',
+                contentType: "application/json",
+                success: function (subdivisionPlan) {
+                    var form = document.forms["subdivisionPlanForm"];
+                    form.elements["subdivisionPlanId"].value = subdivisionPlan.subdivisionPlanId;
+                    form.elements["subdivisionId"].value = subdivisionPlan.subdivisionId;
+                    form.elements["subdivisionPlanIndex"].value = subdivisionPlan.subdivisionPlanIndex;
+                    form.elements["subdivisionPlanDate"].value = subdivisionPlan.subdivisionPlanDate;
+                }
+
+            });
+        }
+
+        function CreateSubdivisionPlan(subdivisionPlanDate, subdivisionPlanIndex, subdivisionId) {
+            $.ajax({
+                url: "api/subdivisionPlan",
+                contentType: "application/json",
+                method: "POST",
+                data: JSON.stringify({
+                    subdivisionPlanDate: subdivisionPlanDate,
+                    subdivisionPlanIndex: subdivisionPlanIndex,
+                    subdivisionId: subdivisionId
+                }),
+                success: function (subdivisionPlan) {
+                    reset();
+                    var form = document.forms["subdivisionPlanForm"];
+                    subdivisionPlan.subdivisionPlanDate = form.elements["subdivisionPlanDate"].options[subdivisionPlanDate].text;
+                    subdivisionPlan.subdivisionPlanIndex = form.elements["subdivisionPlanIndex"].options[subdivisionPlanIndex].text;
+                    subdivisionPlan.subdivisionId = form.elements["subdivisionId"].options[subdivisionId].text;
+                    $("table tbody").append(row(subdivisionPlan));
+                }
+            })
+        }
+
+        function EditSubdivisionPlan(subdivisionPlanId, subdivisionPlanDate, subdivisionPlanIndex, subdivisionId) {
+            $.ajax({
+                url: "api/subdivisionPlan",
+                contentType: "application/json",
+                method: "PUT",
+                data: JSON.stringify({
+                    subdivisionPlanId: subdivisionPlanId,
+                    subdivisionPlanDate: subdivisionPlanDate,
+                    subdivisionPlanIndex: subdivisionPlanIndex,
+                    subdivisionId: subdivisionId
+                }),
+                success: function (subdivisionPlan) {
+                    reset();
+                    var form = document.forms["subdivisionPlanForm"];
+                    subdivisionPlan.subdivisionPlanId = form.elements["subdivisionPlanId"].options[subdivisionPlanId].text;
+                    subdivisionPlan.subdivisionPlanDate = form.elements["subdivisionPlanDate"].options[subdivisionPlanDate].text;
+                    subdivisionPlan.subdivisionPlanIndex = form.elements["subdivisionPlanIndex"].options[subdivisionPlanIndex].text;
+                    subdivisionPlan.subdivisionId = form.elements["subdivisionId"].options[subdivisionId].text;
+                    $("tr[data-rowid='" + subdivisionPlan.subdivisionPlanId + "']").replaceWith(row(subdivisionPlan));
+                }
+            })
+        }
+
+        function reset() {
+            var form = document.forms["subdivisionPlanForm"];
+            form.reset();
+            form.elements["subdivisionPlanId"].value = 0;
+            $("#CRUD").html("Добавить:");
+        }
+
+        function DeleteSubdivisionPlan(id) {
+            $.ajax({
+                url: "api/subdivisionPlan/" + id,
+                contentType: "application/json",
+                method: "DELETE",
+                success: function (subdivisionPlan) {
+                    $("tr[data-rowid='" + subdivisionPlan.subdivisionPlanId + "']").remove();
+                }
+            })
+        }
+
+        var row = function (subdivisionPlan) {
+            return "<tr data-rowid='" + subdivisionPlan.subdivisionPlanId + "'><td>" + subdivisionPlan.subdivisionPlanId + "</td>" +
+                "<td>" + subdivisionPlan.subdivisionPlanId + "</td>" +
+                "<td>" + subdivisionPlan.subdivisionPlanDate + "</td>" +
+                "<td>" + subdivisionPlan.subdivisionPlanIndex + "</td>" +
+                "<td>" + subdivisionPlan.subdivisionName + "</td>" +
+                "<td><a class='editLink' data-id='" + subdivisionPlan.subdivisionPlanId + "'>Изменить</a> | " +
+                "<a class='removeLink' data-id='" + subdivisionPlan.subdivisionPlanId + "'>Удалить</a></td></tr>";
+        }
+
+        function GetSubdivisions() {
+            var listItems = "";
+            $.ajax({
+                url: '/api/subdivisionPlan/subdivisions',
+                type: 'GET',
+                contentType: "application/json",
+                success: function (subdivisions) {
+                    listItems = listItems + "<option value=0 selected>(выбор)</option>";
+                    $.each(subdivisions, function (index, subdivision) {
+                        listItems = listItems + "<option value='" + subdivision.subdivisionId + "'>" + subdivision.subdivisionName + "</option>";
+                    });
+                    $("#subdivisionId").html(listItems);
+                }
+            });
+        }
+
+        $("#reset").click(function (e) {
+            e.preventDefault();
+            reset();
+        })
+
+        $("form").submit(function (e) {
+            e.preventDefault();
+            var subdivisionPlanId = this.elements["subdivisionPlanId"].value;
+            var subdivisionPlanDate = this.elements["subdivisionPlanDate"].value;
+            var subdivisionPlanIndex = this.elements["subdivisionPlanIndex"].value;
+            var subdivisionId = this.elements["subdivisionId"].selectedIndex;
+            if (subdivisionPlanId != 0)
+                EditSubdivisionPlan(subdivisionPlanId, subdivisionPlanDate, subdivisionPlanIndex, subdivisionId);
+            else
+                CreateSubdivisionPlan(subdivisionPlanDate, subdivisionPlanIndex, subdivisionId);
+        });
+
+        $("body").on("click", ".editLink", function () {
+            var id = $(this).data("id");
+            $("#CRUD").html("Изменить:");
+            GetSubdivisionPlan(id);
+        })
+        // нажатие на ссылку Удалить
+        $("body").on("click", ".removeLink", function () {
+            var id = $(this).data("id");
+            DeleteSubdivisionPlan(id);
+            reset();
+        })
+
+        GetSubdivisions();
+        GetSubdivisionPlans();
+        $(document).ready(function () {
+            $("#date").datepicker({ dateFormat: "yy-mm-dd" });
+        });
+    </script>
+</body>
+</html>
